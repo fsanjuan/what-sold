@@ -1,4 +1,5 @@
 pandas
+python-dateutil
 rapidfuzz
 openpyxl
 playwright

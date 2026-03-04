@@ -1,3 +1,6 @@
+from datetime import date
+from dateutil.relativedelta import relativedelta
+
 import pandas as pd
 from rapidfuzz import process, fuzz
 
@@ -6,6 +9,7 @@ def find_matches(
     df: pd.DataFrame,
     street_query: str,
     county: str,
+    months: int = 24,
     threshold: int = 70,
     limit: int = 200,
 ) -> pd.DataFrame:
@@ -21,29 +25,44 @@ def find_matches(
               "Check spelling (e.g. 'Dublin', 'Cork', 'Galway').")
         return pd.DataFrame()
 
-    addresses = county_df["Address"].fillna("").tolist()
-
-    results = process.extract(
-        street_query,
-        addresses,
-        scorer=fuzz.partial_ratio,
-        limit=limit,
-        score_cutoff=threshold,
+    # Parse dates and filter by recency
+    county_df["_date_parsed"] = pd.to_datetime(
+        county_df["Date of Sale (dd/mm/yyyy)"], format="%d/%m/%Y", errors="coerce"
     )
+    if months > 0:
+        cutoff = date.today() - relativedelta(months=months)
+        county_df = county_df[county_df["_date_parsed"] >= pd.Timestamp(cutoff)]
 
-    if not results:
+    if county_df.empty:
+        print(f"No records found in the past {months} months. Try increasing the time window.")
         return pd.DataFrame()
 
-    matched_indices = [county_df.index[idx] for _, _, idx in results]
-    scores = [score for _, score, _ in results]
+    addresses = county_df["Address"].fillna("").tolist()
+    addresses_lower = [a.lower() for a in addresses]
+    query_lower = street_query.lower()
+
+    # Pass 1: exact substring matches (case-insensitive) — always correct
+    exact = [(i, 100) for i, a in enumerate(addresses_lower) if query_lower in a]
+
+    if exact:
+        matched_indices = [county_df.index[i] for i, _ in exact[:limit]]
+        scores = [s for _, s in exact[:limit]]
+    else:
+        # Pass 2: fuzzy fallback for typos — higher threshold to reduce false positives
+        results = process.extract(
+            query_lower,
+            addresses_lower,
+            scorer=fuzz.partial_ratio,
+            limit=limit,
+            score_cutoff=max(threshold, 85),
+        )
+        if not results:
+            return pd.DataFrame()
+        matched_indices = [county_df.index[idx] for _, _, idx in results]
+        scores = [score for _, score, _ in results]
 
     matches = county_df.loc[matched_indices].copy()
     matches["_score"] = scores
-
-    # Parse dates for sorting
-    matches["_date_parsed"] = pd.to_datetime(
-        matches["Date of Sale (dd/mm/yyyy)"], format="%d/%m/%Y", errors="coerce"
-    )
 
     matches = matches.sort_values(
         ["_score", "_date_parsed"], ascending=[False, False]

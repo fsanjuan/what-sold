@@ -29,11 +29,14 @@ def main():
         print("No county entered. Exiting.")
         return
 
+    months_input = input("How many months back to search? [24]: ").strip()
+    months = int(months_input) if months_input.isdigit() else 24
+
     print("\nLoading PPR data...")
     df = load_ppr()
 
-    print(f"Searching for '{street}' in {county}...")
-    matches = find_matches(df, street, county)
+    print(f"Searching for '{street}' in {county} (past {months} months)...")
+    matches = find_matches(df, street, county, months=months)
 
     if matches.empty:
         print("No matches found. Try a broader street name or check the county spelling.")
