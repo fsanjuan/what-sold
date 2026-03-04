@@ -78,11 +78,19 @@ class TestSpreadsheetContent:
         ws = wb.active
         assert ws.cell(row=2, column=3).value == 350000.0
 
+    def test_search_column_has_hyperlink(self, output_xlsx, sample_matches):
+        wb = load_workbook(output_xlsx)
+        ws = wb.active
+        cell = ws.cell(row=2, column=5)
+        assert cell.value == "Search"
+        assert cell.hyperlink is not None
+        assert "google.com" in cell.hyperlink.target
+
     def test_comments_column_is_empty(self, output_xlsx, sample_matches):
         wb = load_workbook(output_xlsx)
         ws = wb.active
         for row in range(2, ws.max_row + 1):
-            assert ws.cell(row=row, column=5).value in (None, "")
+            assert ws.cell(row=row, column=6).value in (None, "")
 
     def test_header_is_bold(self, output_xlsx):
         wb = load_workbook(output_xlsx)

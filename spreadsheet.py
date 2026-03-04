@@ -3,8 +3,10 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils import get_column_letter
 
+from links import build_search_url
 
-HEADERS = ["Address", "Date of Sale", "Price (€)", "Property Type", "Comments"]
+
+HEADERS = ["Address", "Date of Sale", "Price (€)", "Property Type", "Search", "Comments"]
 
 HEADER_FILL = PatternFill(start_color="1F4E79", end_color="1F4E79", fill_type="solid")
 HEADER_FONT = Font(bold=True, color="FFFFFF")
@@ -36,10 +38,16 @@ def generate_spreadsheet(matches: pd.DataFrame, output_path: str) -> None:
             ws.cell(row=row_idx, column=3, value=str(price).strip())
 
         ws.cell(row=row_idx, column=4, value=str(row.get("Description of Property", "")).strip())
-        ws.cell(row=row_idx, column=5, value="")  # Comments — left blank for user
+
+        address = str(row.get("Address", "")).strip()
+        search_cell = ws.cell(row=row_idx, column=5, value="Search")
+        search_cell.hyperlink = build_search_url(address)
+        search_cell.font = Font(color="0563C1", underline="single")
+
+        ws.cell(row=row_idx, column=6, value="")  # Comments — left blank for user
 
     # Auto-fit column widths
-    col_min_widths = [50, 14, 16, 30, 30]
+    col_min_widths = [50, 14, 16, 30, 10, 30]
     for col_idx, min_width in enumerate(col_min_widths, start=1):
         col_letter = get_column_letter(col_idx)
         max_len = min_width
