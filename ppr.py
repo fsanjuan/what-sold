@@ -35,14 +35,20 @@ def _fetch_year(page, year: int) -> pd.DataFrame | None:
     href = link.get_attribute("href")
     csv_url = href if href.startswith("http") else f"{PPR_BASE}{href}"
 
-    csv_text = page.evaluate(f"""
+    import base64
+    csv_b64 = page.evaluate(f"""
         async () => {{
             const r = await fetch('{csv_url}');
             if (!r.ok) throw new Error('HTTP ' + r.status);
-            return await r.text();
+            const buf = await r.arrayBuffer();
+            const bytes = new Uint8Array(buf);
+            let binary = '';
+            for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+            return btoa(binary);
         }}
     """)
-    return pd.read_csv(io.StringIO(csv_text), dtype=str)
+    csv_bytes = base64.b64decode(csv_b64)
+    return pd.read_csv(io.BytesIO(csv_bytes), encoding="cp1252", dtype=str)
 
 
 def update_ppr() -> None:
