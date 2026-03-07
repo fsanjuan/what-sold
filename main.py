@@ -5,7 +5,7 @@ from datetime import date
 from ppr import load_ppr
 from matcher import find_matches
 from spreadsheet import generate_spreadsheet
-from links import build_search_url, resolve_listing_urls, _extract_search_terms
+from links import build_search_url, resolve_listing_urls, _build_query
 
 
 def slugify(text: str) -> str:
@@ -56,8 +56,7 @@ def main():
 
         def on_result(i, address, url):
             prefix = f"  [{i + 1}/{total}] {address[:55]:<55}"
-            terms = _extract_search_terms(address)
-            suffix = url or f'not found  (searched: "{terms}")'
+            suffix = url or f'not found  (searched: {_build_query(address)})'
             print(f"{prefix} → {suffix}")
 
         url_list = resolve_listing_urls(
