@@ -57,10 +57,70 @@ def _extract_search_terms(address: str) -> str:
     return ' '.join(meaningful[:2])
 
 
+def _build_query(address: str) -> str:
+    """
+    Build a search query with the development name quoted to prevent cross-development matches.
+      APT 66, BLOCK B, SMITHFIELD MARKET  ->  66 "smithfield market"
+      89C SMITHFIELD MARKET               ->  89c "smithfield market"
+      28A SMITHFIELD MARKET               ->  28a "smithfield market"
+    """
+    address = address.strip()
+
+    # APT-style: unit_id comes from explicit prefix
+    apt_match = re.match(
+        r'^\s*(?:APT|APARTMENT|UNIT|FLAT|NO\.?)\s+([\w-]+)',
+        address, flags=re.IGNORECASE
+    )
+    unit_id = apt_match.group(1) if apt_match else None
+
+    # Strip apartment + optional block prefix
+    cleaned = re.sub(
+        r'^\s*(?:APT|APARTMENT|UNIT|FLAT|NO\.?)\s+[\w-]+(?:\s*[-,/]\s*(?:BLK|BLOCK)\s+[\w-]+)?\s*[,]?\s*',
+        '', address, flags=re.IGNORECASE
+    )
+    cleaned = re.sub(r'^\s*(?:BLOCK|BLK)\s+[\w-]+\s*[,]?\s*', '', cleaned, flags=re.IGNORECASE)
+
+    parts = [p.strip() for p in cleaned.split(',')]
+    meaningful = [
+        p for p in parts
+        if p
+        and not re.match(r'^(Dublin|Cork|Galway|Limerick|Waterford|D\d)', p, re.IGNORECASE)
+        and not re.match(r'^Co\.?\s+', p, re.IGNORECASE)
+    ]
+
+    def _clean_dev(name: str) -> str:
+        """Strip trailing city/county from a development name."""
+        return re.sub(
+            r'\s+(?:Dublin|Cork|Galway|Limerick|Waterford|D\d+)\b.*$', '', name, flags=re.IGNORECASE
+        ).strip()
+
+    if unit_id:
+        # Extract block identifier from original address before it was stripped
+        block_match = re.search(r'(?:BLOCK|BLK)\s*([\w-]+)', address, flags=re.IGNORECASE)
+        block_id = block_match.group(1) if block_match else None
+
+        street_parts = [p for p in meaningful if not re.match(r'^(BLOCK|BLK)\w*', p, re.IGNORECASE)]
+        street = street_parts[0] if street_parts else (meaningful[0] if meaningful else '')
+        street = _clean_dev(street)
+
+        identifier = f'{unit_id} block {block_id}' if block_id else unit_id
+        return f'{identifier} "{street}"' if street else identifier
+
+    # Non-APT: split leading identifier (e.g. "89C", "28A", "4") from development name
+    if meaningful:
+        m = re.match(r'^(\S+)\s+(.+)$', meaningful[0])
+        if m:
+            code, dev = m.group(1), _clean_dev(m.group(2))
+            if dev:
+                return f'{code} "{dev}"'
+        return f'"{meaningful[0]}"'
+
+    return ''
+
+
 def build_search_url(address: str) -> str:
     """Return a Google search URL to find the property listing on Daft or MyHome."""
-    terms = _extract_search_terms(address)
-    query = f'site:myhome.ie/residential/brochure OR site:daft.ie/for-sale {terms}'
+    query = f'site:myhome.ie/residential/brochure OR site:daft.ie/for-sale {_build_query(address)}'
     return "https://www.google.com/search?" + urlencode({"q": query})
 
 
@@ -119,7 +179,7 @@ def resolve_listing_urls(
         url: str | None = None
 
         if terms:
-            query = f'site:myhome.ie/residential/brochure OR site:daft.ie/for-sale {terms}'
+            query = f'site:myhome.ie/residential/brochure OR site:daft.ie/for-sale {_build_query(address)}'
             try:
                 resp = requests.post(
                     "https://google.serper.dev/search",
