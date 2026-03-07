@@ -1,6 +1,6 @@
 import re
 import time
-from urllib.parse import urlencode, unquote
+from urllib.parse import urlencode
 
 import requests
 
@@ -60,8 +60,12 @@ def _extract_search_terms(address: str) -> str:
 def build_search_url(address: str) -> str:
     """Return a Google search URL to find the property listing on Daft or MyHome."""
     terms = _extract_search_terms(address)
-    query = f'site:myhome.ie/residential/brochure OR site:daft.ie/for-sale "{terms}"'
+    query = f'site:myhome.ie/residential/brochure OR site:daft.ie/for-sale {terms}'
     return "https://www.google.com/search?" + urlencode({"q": query})
+
+
+def _first_valid_url(candidates: list[str]) -> str | None:
+    return next((c for c in candidates if any(p in c for p in _VALID_URL_PATTERNS)), None)
 
 
 def resolve_listing_urls(
@@ -69,6 +73,7 @@ def resolve_listing_urls(
     api_key: str,
     progress_callback=None,
     delay: float = 0.2,
+    debug: bool = False,
 ) -> list[str | None]:
     """
     Use Serper.dev (Google Search API) to find a daft.ie/myhome.ie listing for each address.
@@ -85,20 +90,20 @@ def resolve_listing_urls(
         url: str | None = None
 
         if terms:
-            query = f'site:daft.ie OR site:myhome.ie "{terms}"'
+            query = f'site:myhome.ie/residential/brochure OR site:daft.ie/for-sale {terms}'
             try:
                 resp = requests.post(
                     "https://google.serper.dev/search",
                     headers={"X-API-KEY": api_key, "Content-Type": "application/json"},
-                    json={"q": query, "gl": "ie", "hl": "en", "num": 3},
+                    json={"q": query, "gl": "ie", "hl": "en", "num": 5},
                     timeout=10,
                 )
                 resp.raise_for_status()
-                for result in resp.json().get("organic", []):
-                    candidate = result.get("link", "")
-                    if any(pattern in candidate for pattern in _VALID_URL_PATTERNS):
-                        url = candidate
-                        break
+                candidates = [r.get("link", "") for r in resp.json().get("organic", [])]
+                if debug:
+                    print(f"    [debug] query: {query}")
+                    print(f"    [debug] results: {candidates}")
+                url = _first_valid_url(candidates)
             except requests.RequestException:
                 pass
 

@@ -5,7 +5,7 @@ from datetime import date
 from ppr import load_ppr
 from matcher import find_matches
 from spreadsheet import generate_spreadsheet
-from links import build_search_url, resolve_listing_urls
+from links import build_search_url, resolve_listing_urls, _extract_search_terms
 
 
 def slugify(text: str) -> str:
@@ -46,8 +46,9 @@ def main():
     print(f"Found {len(matches)} match(es).")
 
     serper_key = os.environ.get("SERPER_API_KEY", "").strip()
-    resolve = input("Resolve Daft/MyHome links? [y/N]: ").strip().lower() if serper_key else "n"
-    if resolve == "y" and serper_key:
+    resolve = input("Resolve Daft/MyHome links? [y/N/debug]: ").strip().lower() if serper_key else "n"
+    if resolve in ("y", "debug") and serper_key:
+        debug = resolve == "debug"
         print("Searching for listings...")
         address_list = [str(row.get("Address", "")).strip() for _, row in matches.iterrows()]
         idx_list = list(matches.index)
@@ -55,9 +56,14 @@ def main():
 
         def on_result(i, address, url):
             prefix = f"  [{i + 1}/{total}] {address[:55]:<55}"
-            print(f"{prefix} → {url or 'not found'}")
+            terms = _extract_search_terms(address)
+            suffix = url or f'not found  (searched: "{terms}")'
+            print(f"{prefix} → {suffix}")
 
-        url_list = resolve_listing_urls(address_list, api_key=serper_key, progress_callback=on_result)
+        url_list = resolve_listing_urls(
+            address_list, api_key=serper_key,
+            progress_callback=on_result, debug=debug,
+        )
         urls = dict(zip(idx_list, url_list))
         matches = matches.copy()
         matches["_listing_url"] = matches.index.map(urls)
