@@ -64,8 +64,37 @@ def build_search_url(address: str) -> str:
     return "https://www.google.com/search?" + urlencode({"q": query})
 
 
-def _first_valid_url(candidates: list[str]) -> str | None:
-    return next((c for c in candidates if any(p in c for p in _VALID_URL_PATTERNS)), None)
+def _url_matches_address(url: str, address: str) -> bool:
+    """
+    Return False if the URL slug clearly contradicts the PPR address.
+    Checks that the unit number and block letter (when present) appear in the URL.
+    """
+    slug = url.lower()
+    address_lower = address.lower()
+
+    # Check unit number from "APT 74" / "APARTMENT 58" style prefixes (digits only)
+    apt_match = re.match(r'^\s*(?:apt|apartment|unit|flat|no\.?)\s+(\d+)', address_lower)
+    if apt_match:
+        unit_num = apt_match.group(1)
+        if not re.search(rf'(?<!\d){re.escape(unit_num)}(?!\d)', slug):
+            return False
+
+    # Check block letter — handles "BLOCK B", "BLK A1", "BLOCKA" etc.
+    block_match = re.search(r'(?:block|blk)\s*([a-z])', address_lower)
+    if block_match:
+        block_letter = block_match.group(1)
+        if f'block-{block_letter}' not in slug:
+            return False
+
+    return True
+
+
+def _first_valid_url(candidates: list[str], address: str) -> str | None:
+    return next(
+        (c for c in candidates
+         if any(p in c for p in _VALID_URL_PATTERNS) and _url_matches_address(c, address)),
+        None,
+    )
 
 
 def resolve_listing_urls(
@@ -103,7 +132,7 @@ def resolve_listing_urls(
                 if debug:
                     print(f"    [debug] query: {query}")
                     print(f"    [debug] results: {candidates}")
-                url = _first_valid_url(candidates)
+                url = _first_valid_url(candidates, address)
             except requests.RequestException:
                 pass
 
