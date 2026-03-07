@@ -3,3 +3,4 @@ python-dateutil
 rapidfuzz
 openpyxl
 playwright
+requests

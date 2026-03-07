@@ -40,9 +40,16 @@ def generate_spreadsheet(matches: pd.DataFrame, output_path: str) -> None:
         ws.cell(row=row_idx, column=4, value=str(row.get("Description of Property", "")).strip())
 
         address = str(row.get("Address", "")).strip()
-        search_cell = ws.cell(row=row_idx, column=5, value="Search")
-        search_cell.hyperlink = build_search_url(address)
-        search_cell.font = Font(color="0563C1", underline="single")
+        resolved = row.get("_listing_url")
+        if resolved and str(resolved) not in ("", "nan", "None"):
+            link_url = str(resolved)
+            link_label = "View"
+        else:
+            link_url = build_search_url(address)
+            link_label = "Search"
+        link_cell = ws.cell(row=row_idx, column=5, value=link_label)
+        link_cell.hyperlink = link_url
+        link_cell.font = Font(color="0563C1", underline="single")
 
         ws.cell(row=row_idx, column=6, value="")  # Comments — left blank for user
 

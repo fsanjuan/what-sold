@@ -5,6 +5,7 @@ from datetime import date
 from ppr import load_ppr
 from matcher import find_matches
 from spreadsheet import generate_spreadsheet
+from links import build_search_url, resolve_listing_urls
 
 
 def slugify(text: str) -> str:
@@ -43,6 +44,27 @@ def main():
         return
 
     print(f"Found {len(matches)} match(es).")
+
+    serper_key = os.environ.get("SERPER_API_KEY", "").strip()
+    resolve = input("Resolve Daft/MyHome links? [y/N]: ").strip().lower() if serper_key else "n"
+    if resolve == "y" and serper_key:
+        print("Searching for listings...")
+        address_list = [str(row.get("Address", "")).strip() for _, row in matches.iterrows()]
+        idx_list = list(matches.index)
+        total = len(address_list)
+
+        def on_result(i, address, url):
+            prefix = f"  [{i + 1}/{total}] {address[:55]:<55}"
+            print(f"{prefix} → {url or 'not found'}")
+
+        url_list = resolve_listing_urls(address_list, api_key=serper_key, progress_callback=on_result)
+        urls = dict(zip(idx_list, url_list))
+        matches = matches.copy()
+        matches["_listing_url"] = matches.index.map(urls)
+        found = sum(1 for v in urls.values() if v)
+        print(f"  {found}/{len(matches)} listing(s) found.")
+    elif resolve == "y" and not serper_key:
+        print("  Skipping — set SERPER_API_KEY environment variable to enable link resolution.")
 
     slug = slugify(f"{street}_{county}")
     filename = f"{slug}_{date.today()}.xlsx"
