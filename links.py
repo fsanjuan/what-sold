@@ -6,17 +6,37 @@ import requests
 
 TARGET_DOMAINS = ("daft.ie", "myhome.ie")
 
+# URL path patterns that indicate a real listing page worth linking to
+_VALID_URL_PATTERNS = (
+    "myhome.ie/residential/brochure/",
+    "daft.ie/for-sale/",
+    "daft.ie/new-homes/",
+)
+
 
 def _extract_search_terms(address: str) -> str:
-    """Strip apartment/block prefixes and return the meaningful part of a PPR address."""
-    cleaned = re.sub(
-        r'^\s*(APT|APARTMENT|UNIT|FLAT|NO\.?)\s+[\w-]+\s*,?\s*',
-        '', address.strip(), flags=re.IGNORECASE
+    """
+    Extract meaningful search terms from a PPR address.
+    Keeps the unit number (e.g. "116" from "APT 116") so searches are apartment-specific.
+    """
+    address = address.strip()
+
+    # Capture the unit number from "APT XX" / "APARTMENT XX" style prefixes
+    apt_match = re.match(
+        r'^\s*(?:APT|APARTMENT|UNIT|FLAT|NO\.?)\s+([\w-]+)',
+        address, flags=re.IGNORECASE
     )
-    # Strip a leading dash/hyphen that may remain after APT stripping (e.g. "APT 116 - BLK A1")
-    cleaned = re.sub(r'^\s*-\s*', '', cleaned)
+    unit_id = apt_match.group(1) if apt_match else None
+
+    # Strip the full apartment prefix, including an optional dash-separated block label
+    # e.g. "APT 116 - BLK A1, " or "APT 58 BLOCK B, " or "APT 66, "
     cleaned = re.sub(
-        r'^\s*(BLOCK|BLK)\s+[\w-]+\s*,?\s*',
+        r'^\s*(?:APT|APARTMENT|UNIT|FLAT|NO\.?)\s+[\w-]+(?:\s*[-,/]\s*(?:BLK|BLOCK)\s+[\w-]+)?\s*[,]?\s*',
+        '', address, flags=re.IGNORECASE
+    )
+    # Strip a standalone BLOCK/BLK prefix that may remain after the apt strip
+    cleaned = re.sub(
+        r'^\s*(?:BLOCK|BLK)\s+[\w-]+\s*[,]?\s*',
         '', cleaned, flags=re.IGNORECASE
     )
 
@@ -28,13 +48,19 @@ def _extract_search_terms(address: str) -> str:
         and not re.match(r'^Co\.?\s+', p, re.IGNORECASE)
     ]
 
+    if unit_id:
+        # Skip any remaining block-code fragments (e.g. "BLOCKA") to find the street name
+        street_parts = [p for p in meaningful if not re.match(r'^(BLOCK|BLK)\w*', p, re.IGNORECASE)]
+        street = street_parts[0] if street_parts else (meaningful[0] if meaningful else '')
+        return f"{unit_id} {street}".strip() if street else unit_id
+
     return ' '.join(meaningful[:2])
 
 
 def build_search_url(address: str) -> str:
-    """Return a Google search URL to find the property on Daft or MyHome."""
+    """Return a Google search URL to find the property listing on Daft or MyHome."""
     terms = _extract_search_terms(address)
-    query = f'site:daft.ie OR site:myhome.ie "{terms}"'
+    query = f'site:myhome.ie/residential/brochure OR site:daft.ie/for-sale "{terms}"'
     return "https://www.google.com/search?" + urlencode({"q": query})
 
 
@@ -70,7 +96,7 @@ def resolve_listing_urls(
                 resp.raise_for_status()
                 for result in resp.json().get("organic", []):
                     candidate = result.get("link", "")
-                    if any(domain in candidate for domain in TARGET_DOMAINS):
+                    if any(pattern in candidate for pattern in _VALID_URL_PATTERNS):
                         url = candidate
                         break
             except requests.RequestException:
