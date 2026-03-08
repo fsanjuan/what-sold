@@ -43,7 +43,7 @@ You'll be prompted for:
 
 The last prompt only appears if `SERPER_API_KEY` is set in your environment (see below). Enter `debug` to print the exact search queries and raw API results.
 
-Output is saved to a `.xlsx` file in the project directory, e.g. `main_street_dublin_2026-03-08.xlsx`.
+Output is saved to `output/`, e.g. `output/main_street_dublin_2026-03-08.xlsx`.
 
 ## Link resolution (optional)
 

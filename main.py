@@ -73,10 +73,12 @@ def main():
 
     slug = slugify(f"{street}_{county}")
     filename = f"{slug}_{date.today()}.xlsx"
-    output_path = os.path.join(os.path.dirname(__file__), filename)
+    output_dir = os.path.join(os.path.dirname(__file__), "output")
+    os.makedirs(output_dir, exist_ok=True)
+    output_path = os.path.join(output_dir, filename)
 
     generate_spreadsheet(matches, output_path)
-    print(f"\nSaved to: {filename}")
+    print(f"\nSaved to: output/{filename}")
 
 
 if __name__ == "__main__":
