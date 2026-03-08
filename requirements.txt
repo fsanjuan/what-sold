@@ -4,3 +4,4 @@ rapidfuzz
 openpyxl
 playwright
 requests
+pytest
