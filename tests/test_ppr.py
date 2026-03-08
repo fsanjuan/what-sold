@@ -26,7 +26,9 @@ class TestYearsToDownload:
 
     def test_missing_historical_years_included(self, tmp_path):
         with patch.object(ppr, "DATA_DIR", str(tmp_path)):
-            with patch.object(ppr, "_year_path", lambda y: str(tmp_path / f"PPR-{y}.csv")):
+            with patch.object(
+                ppr, "_year_path", lambda y: str(tmp_path / f"PPR-{y}.csv")
+            ):
                 # Create only 2022 file, leave others missing
                 (tmp_path / "PPR-2022.csv").touch()
                 years = _years_to_download()
@@ -36,7 +38,9 @@ class TestYearsToDownload:
     def test_current_year_always_included_even_if_file_exists(self, tmp_path):
         current = date.today().year
         with patch.object(ppr, "DATA_DIR", str(tmp_path)):
-            with patch.object(ppr, "_year_path", lambda y: str(tmp_path / f"PPR-{y}.csv")):
+            with patch.object(
+                ppr, "_year_path", lambda y: str(tmp_path / f"PPR-{y}.csv")
+            ):
                 (tmp_path / f"PPR-{current}.csv").touch()
                 years = _years_to_download()
                 assert current in years
@@ -52,7 +56,7 @@ class TestLoadPpr:
     def _stub_row(self, year):
         return {
             "Date of Sale (dd/mm/yyyy)": f"01/06/{year}",
-            "Address": f"1 TEST ST",
+            "Address": "1 TEST ST",
             "County": "Dublin",
             "Eircode": "",
             "Price (€)": "€300,000.00",
@@ -64,15 +68,23 @@ class TestLoadPpr:
 
     def test_loads_and_normalises_county(self, tmp_path):
         current_year = date.today().year
-        self._make_year_csv(str(tmp_path), current_year, [{
-            **self._stub_row(current_year),
-            "Address": "1 TEST ST, DUBLIN 7",
-            "County": "Dublin",
-            "Price (€)": "€350,000.00",
-        }])
+        self._make_year_csv(
+            str(tmp_path),
+            current_year,
+            [
+                {
+                    **self._stub_row(current_year),
+                    "Address": "1 TEST ST, DUBLIN 7",
+                    "County": "Dublin",
+                    "Price (€)": "€350,000.00",
+                }
+            ],
+        )
 
         with patch.object(ppr, "DATA_DIR", str(tmp_path)):
-            with patch.object(ppr, "_year_path", lambda y: str(tmp_path / f"PPR-{y}.csv")):
+            with patch.object(
+                ppr, "_year_path", lambda y: str(tmp_path / f"PPR-{y}.csv")
+            ):
                 with patch("ppr.update_ppr"):
                     df = load_ppr()
 
@@ -81,13 +93,21 @@ class TestLoadPpr:
 
     def test_price_cleaned_to_float(self, tmp_path):
         current_year = date.today().year
-        self._make_year_csv(str(tmp_path), current_year, [{
-            **self._stub_row(current_year),
-            "Price (€)": "€350,000.00",
-        }])
+        self._make_year_csv(
+            str(tmp_path),
+            current_year,
+            [
+                {
+                    **self._stub_row(current_year),
+                    "Price (€)": "€350,000.00",
+                }
+            ],
+        )
 
         with patch.object(ppr, "DATA_DIR", str(tmp_path)):
-            with patch.object(ppr, "_year_path", lambda y: str(tmp_path / f"PPR-{y}.csv")):
+            with patch.object(
+                ppr, "_year_path", lambda y: str(tmp_path / f"PPR-{y}.csv")
+            ):
                 with patch("ppr.update_ppr"):
                     df = load_ppr()
 
@@ -95,14 +115,25 @@ class TestLoadPpr:
 
     def test_concatenates_multiple_years(self, tmp_path):
         current_year = date.today().year
-        for year, address in [(current_year - 1, "1 OLD ST"), (current_year, "2 NEW ST")]:
-            self._make_year_csv(str(tmp_path), year, [{
-                **self._stub_row(year),
-                "Address": address,
-            }])
+        for year, address in [
+            (current_year - 1, "1 OLD ST"),
+            (current_year, "2 NEW ST"),
+        ]:
+            self._make_year_csv(
+                str(tmp_path),
+                year,
+                [
+                    {
+                        **self._stub_row(year),
+                        "Address": address,
+                    }
+                ],
+            )
 
         with patch.object(ppr, "DATA_DIR", str(tmp_path)):
-            with patch.object(ppr, "_year_path", lambda y: str(tmp_path / f"PPR-{y}.csv")):
+            with patch.object(
+                ppr, "_year_path", lambda y: str(tmp_path / f"PPR-{y}.csv")
+            ):
                 with patch("ppr.update_ppr"):
                     df = load_ppr()
 

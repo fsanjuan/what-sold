@@ -1,8 +1,8 @@
 from datetime import date
-from dateutil.relativedelta import relativedelta
 
 import pandas as pd
-from rapidfuzz import process, fuzz
+from dateutil.relativedelta import relativedelta
+from rapidfuzz import fuzz, process
 
 
 def find_matches(
@@ -21,8 +21,10 @@ def find_matches(
         county_df = df[df["_county_norm"].str.contains(county_norm, na=False)].copy()
 
     if county_df.empty:
-        print(f"No records found for county '{county}'. "
-              "Check spelling (e.g. 'Dublin', 'Cork', 'Galway').")
+        print(
+            f"No records found for county '{county}'. "
+            "Check spelling (e.g. 'Dublin', 'Cork', 'Galway')."
+        )
         return pd.DataFrame()
 
     # Parse dates and filter by recency
@@ -34,7 +36,9 @@ def find_matches(
         county_df = county_df[county_df["_date_parsed"] >= pd.Timestamp(cutoff)]
 
     if county_df.empty:
-        print(f"No records found in the past {months} months. Try increasing the time window.")
+        print(
+            f"No records found in the past {months} months. Try increasing the time window."
+        )
         return pd.DataFrame()
 
     addresses = county_df["Address"].fillna("").tolist()
@@ -64,8 +68,6 @@ def find_matches(
     matches = county_df.loc[matched_indices].copy()
     matches["_score"] = scores
 
-    matches = matches.sort_values(
-        ["_score", "_date_parsed"], ascending=[False, False]
-    )
+    matches = matches.sort_values(["_score", "_date_parsed"], ascending=[False, False])
 
     return matches

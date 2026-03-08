@@ -1,4 +1,3 @@
-import re
 from datetime import date
 
 import pandas as pd
@@ -31,30 +30,54 @@ def old():
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def smithfield_df():
-    return make_df([
-        {"Address": "APT 10, BLOCK A, SMITHFIELD MARKET, DUBLIN 7", "County": "Dublin",
-         "Date of Sale (dd/mm/yyyy)": recent(3), "Price (€)": 350000.0,
-         "Description of Property": "Second-Hand Dwelling house /Apartment"},
-        {"Address": "22 SMITHFIELD VILLAGE, BOW ST, DUBLIN 7", "County": "Dublin",
-         "Date of Sale (dd/mm/yyyy)": recent(6), "Price (€)": 420000.0,
-         "Description of Property": "Second-Hand Dwelling house /Apartment"},
-        {"Address": "5 GRIFFITH AVENUE, DUBLIN 9", "County": "Dublin",
-         "Date of Sale (dd/mm/yyyy)": recent(1), "Price (€)": 550000.0,
-         "Description of Property": "Second-Hand Dwelling house /Apartment"},
-        {"Address": "14 SPRINGFIELD PARK, CORK", "County": "Cork",
-         "Date of Sale (dd/mm/yyyy)": recent(1), "Price (€)": 300000.0,
-         "Description of Property": "Second-Hand Dwelling house /Apartment"},
-        {"Address": "APT 5, ASHFIELD COURT, DUBLIN 15", "County": "Dublin",
-         "Date of Sale (dd/mm/yyyy)": recent(1), "Price (€)": 280000.0,
-         "Description of Property": "Second-Hand Dwelling house /Apartment"},
-    ])
+    return make_df(
+        [
+            {
+                "Address": "APT 10, BLOCK A, SMITHFIELD MARKET, DUBLIN 7",
+                "County": "Dublin",
+                "Date of Sale (dd/mm/yyyy)": recent(3),
+                "Price (€)": 350000.0,
+                "Description of Property": "Second-Hand Dwelling house /Apartment",
+            },
+            {
+                "Address": "22 SMITHFIELD VILLAGE, BOW ST, DUBLIN 7",
+                "County": "Dublin",
+                "Date of Sale (dd/mm/yyyy)": recent(6),
+                "Price (€)": 420000.0,
+                "Description of Property": "Second-Hand Dwelling house /Apartment",
+            },
+            {
+                "Address": "5 GRIFFITH AVENUE, DUBLIN 9",
+                "County": "Dublin",
+                "Date of Sale (dd/mm/yyyy)": recent(1),
+                "Price (€)": 550000.0,
+                "Description of Property": "Second-Hand Dwelling house /Apartment",
+            },
+            {
+                "Address": "14 SPRINGFIELD PARK, CORK",
+                "County": "Cork",
+                "Date of Sale (dd/mm/yyyy)": recent(1),
+                "Price (€)": 300000.0,
+                "Description of Property": "Second-Hand Dwelling house /Apartment",
+            },
+            {
+                "Address": "APT 5, ASHFIELD COURT, DUBLIN 15",
+                "County": "Dublin",
+                "Date of Sale (dd/mm/yyyy)": recent(1),
+                "Price (€)": 280000.0,
+                "Description of Property": "Second-Hand Dwelling house /Apartment",
+            },
+        ]
+    )
 
 
 # ---------------------------------------------------------------------------
 # County filtering
 # ---------------------------------------------------------------------------
+
 
 class TestCountyFilter:
     def test_filters_to_correct_county(self, smithfield_df):
@@ -78,6 +101,7 @@ class TestCountyFilter:
 # ---------------------------------------------------------------------------
 # Address matching — exact matches
 # ---------------------------------------------------------------------------
+
 
 class TestExactMatching:
     def test_matches_uppercase_address(self, smithfield_df):
@@ -111,38 +135,65 @@ class TestExactMatching:
 # Date filtering
 # ---------------------------------------------------------------------------
 
+
 class TestDateFilter:
     def test_excludes_old_records(self):
-        df = make_df([
-            {"Address": "1 SMITHFIELD, DUBLIN 7", "County": "Dublin",
-             "Date of Sale (dd/mm/yyyy)": old(), "Price (€)": 300000.0,
-             "Description of Property": ""},
-            {"Address": "2 SMITHFIELD, DUBLIN 7", "County": "Dublin",
-             "Date of Sale (dd/mm/yyyy)": recent(6), "Price (€)": 310000.0,
-             "Description of Property": ""},
-        ])
+        df = make_df(
+            [
+                {
+                    "Address": "1 SMITHFIELD, DUBLIN 7",
+                    "County": "Dublin",
+                    "Date of Sale (dd/mm/yyyy)": old(),
+                    "Price (€)": 300000.0,
+                    "Description of Property": "",
+                },
+                {
+                    "Address": "2 SMITHFIELD, DUBLIN 7",
+                    "County": "Dublin",
+                    "Date of Sale (dd/mm/yyyy)": recent(6),
+                    "Price (€)": 310000.0,
+                    "Description of Property": "",
+                },
+            ]
+        )
         results = find_matches(df, "Smithfield", "Dublin", months=24)
         assert len(results) == 1
         assert "2 SMITHFIELD" in results.iloc[0]["Address"]
 
     def test_months_zero_returns_all(self):
-        df = make_df([
-            {"Address": "1 SMITHFIELD, DUBLIN 7", "County": "Dublin",
-             "Date of Sale (dd/mm/yyyy)": old(), "Price (€)": 300000.0,
-             "Description of Property": ""},
-            {"Address": "2 SMITHFIELD, DUBLIN 7", "County": "Dublin",
-             "Date of Sale (dd/mm/yyyy)": recent(6), "Price (€)": 310000.0,
-             "Description of Property": ""},
-        ])
+        df = make_df(
+            [
+                {
+                    "Address": "1 SMITHFIELD, DUBLIN 7",
+                    "County": "Dublin",
+                    "Date of Sale (dd/mm/yyyy)": old(),
+                    "Price (€)": 300000.0,
+                    "Description of Property": "",
+                },
+                {
+                    "Address": "2 SMITHFIELD, DUBLIN 7",
+                    "County": "Dublin",
+                    "Date of Sale (dd/mm/yyyy)": recent(6),
+                    "Price (€)": 310000.0,
+                    "Description of Property": "",
+                },
+            ]
+        )
         results = find_matches(df, "Smithfield", "Dublin", months=0)
         assert len(results) == 2
 
     def test_all_old_records_returns_empty(self):
-        df = make_df([
-            {"Address": "1 SMITHFIELD, DUBLIN 7", "County": "Dublin",
-             "Date of Sale (dd/mm/yyyy)": old(), "Price (€)": 300000.0,
-             "Description of Property": ""},
-        ])
+        df = make_df(
+            [
+                {
+                    "Address": "1 SMITHFIELD, DUBLIN 7",
+                    "County": "Dublin",
+                    "Date of Sale (dd/mm/yyyy)": old(),
+                    "Price (€)": 300000.0,
+                    "Description of Property": "",
+                },
+            ]
+        )
         results = find_matches(df, "Smithfield", "Dublin", months=24)
         assert results.empty
 
@@ -151,19 +202,34 @@ class TestDateFilter:
 # Sorting
 # ---------------------------------------------------------------------------
 
+
 class TestSorting:
     def test_sorted_by_date_descending(self):
-        df = make_df([
-            {"Address": "1 SMITHFIELD, DUBLIN 7", "County": "Dublin",
-             "Date of Sale (dd/mm/yyyy)": recent(12), "Price (€)": 300000.0,
-             "Description of Property": ""},
-            {"Address": "2 SMITHFIELD, DUBLIN 7", "County": "Dublin",
-             "Date of Sale (dd/mm/yyyy)": recent(3), "Price (€)": 320000.0,
-             "Description of Property": ""},
-            {"Address": "3 SMITHFIELD, DUBLIN 7", "County": "Dublin",
-             "Date of Sale (dd/mm/yyyy)": recent(6), "Price (€)": 310000.0,
-             "Description of Property": ""},
-        ])
+        df = make_df(
+            [
+                {
+                    "Address": "1 SMITHFIELD, DUBLIN 7",
+                    "County": "Dublin",
+                    "Date of Sale (dd/mm/yyyy)": recent(12),
+                    "Price (€)": 300000.0,
+                    "Description of Property": "",
+                },
+                {
+                    "Address": "2 SMITHFIELD, DUBLIN 7",
+                    "County": "Dublin",
+                    "Date of Sale (dd/mm/yyyy)": recent(3),
+                    "Price (€)": 320000.0,
+                    "Description of Property": "",
+                },
+                {
+                    "Address": "3 SMITHFIELD, DUBLIN 7",
+                    "County": "Dublin",
+                    "Date of Sale (dd/mm/yyyy)": recent(6),
+                    "Price (€)": 310000.0,
+                    "Description of Property": "",
+                },
+            ]
+        )
         results = find_matches(df, "Smithfield", "Dublin", months=24)
         dates = pd.to_datetime(results["Date of Sale (dd/mm/yyyy)"], format="%d/%m/%Y")
         assert dates.is_monotonic_decreasing

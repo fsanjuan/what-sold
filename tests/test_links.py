@@ -1,20 +1,31 @@
-import pytest
-from links import _extract_search_terms, _build_query, _url_matches_address, _first_valid_url, build_search_url
-
+from links import (
+    _build_query,
+    _extract_search_terms,
+    _first_valid_url,
+    _url_matches_address,
+    build_search_url,
+)
 
 # ---------------------------------------------------------------------------
 # _extract_search_terms
 # ---------------------------------------------------------------------------
 
+
 class TestExtractSearchTerms:
     def test_apt_prefix_stripped(self):
-        assert "APT" not in _extract_search_terms("APT 66, BLOCK B, SMITHFIELD MARKET DUBLIN 7")
+        assert "APT" not in _extract_search_terms(
+            "APT 66, BLOCK B, SMITHFIELD MARKET DUBLIN 7"
+        )
 
     def test_unit_number_kept(self):
-        assert "66" in _extract_search_terms("APT 66, BLOCK B, SMITHFIELD MARKET DUBLIN 7")
+        assert "66" in _extract_search_terms(
+            "APT 66, BLOCK B, SMITHFIELD MARKET DUBLIN 7"
+        )
 
     def test_block_stripped(self):
-        result = _extract_search_terms("APARTMENT 58 BLOCK B, SMITHFIELD MARKET, DUBLIN 7")
+        result = _extract_search_terms(
+            "APARTMENT 58 BLOCK B, SMITHFIELD MARKET, DUBLIN 7"
+        )
         assert "BLOCK" not in result.upper()
 
     def test_county_stripped(self):
@@ -23,7 +34,9 @@ class TestExtractSearchTerms:
         assert "DUBLIN" not in result.upper()
 
     def test_development_kept(self):
-        result = _extract_search_terms("APT 116 - BLK A1, SMITHFIELD MARKET, SMITHFIELD")
+        result = _extract_search_terms(
+            "APT 116 - BLK A1, SMITHFIELD MARKET, SMITHFIELD"
+        )
         assert "SMITHFIELD MARKET" in result.upper()
 
     def test_no_apt_prefix(self):
@@ -33,7 +46,9 @@ class TestExtractSearchTerms:
 
     def test_dash_block_stripped(self):
         # "APT 116 - BLK A1" — the dash+block should be stripped cleanly
-        result = _extract_search_terms("APT 116 - BLK A1, SMITHFIELD MARKET, SMITHFIELD")
+        result = _extract_search_terms(
+            "APT 116 - BLK A1, SMITHFIELD MARKET, SMITHFIELD"
+        )
         assert "-" not in result
         assert "BLK" not in result.upper()
 
@@ -46,6 +61,7 @@ class TestExtractSearchTerms:
 # ---------------------------------------------------------------------------
 # _build_query
 # ---------------------------------------------------------------------------
+
 
 class TestBuildQuery:
     def test_development_quoted(self):
@@ -106,6 +122,7 @@ class TestBuildQuery:
 # ---------------------------------------------------------------------------
 # _url_matches_address
 # ---------------------------------------------------------------------------
+
 
 class TestUrlMatchesAddress:
     # Correct matches — should return True
@@ -172,13 +189,16 @@ class TestUrlMatchesAddress:
 # _first_valid_url
 # ---------------------------------------------------------------------------
 
+
 class TestFirstValidUrl:
     def test_returns_first_brochure_url(self):
         candidates = [
             "https://www.myhome.ie/residential/brochure/apartment-9-block-f/123",
             "https://www.myhome.ie/residential/brochure/apartment-10-block-f/456",
         ]
-        result = _first_valid_url(candidates, "APT 9, BLOCK F, SMITHFIELD MARKET DUBLIN 7")
+        result = _first_valid_url(
+            candidates, "APT 9, BLOCK F, SMITHFIELD MARKET DUBLIN 7"
+        )
         assert result == candidates[0]
 
     def test_skips_priceregister_url(self):
@@ -186,7 +206,9 @@ class TestFirstValidUrl:
             "https://www.myhome.ie/priceregister/apt-9-block-f/123",
             "https://www.myhome.ie/residential/brochure/apartment-9-block-f/456",
         ]
-        result = _first_valid_url(candidates, "APT 9, BLOCK F, SMITHFIELD MARKET DUBLIN 7")
+        result = _first_valid_url(
+            candidates, "APT 9, BLOCK F, SMITHFIELD MARKET DUBLIN 7"
+        )
         assert "brochure" in result
 
     def test_skips_for_rent_url(self):
@@ -194,7 +216,9 @@ class TestFirstValidUrl:
             "https://www.daft.ie/for-rent/apartment-smithfield/123",
             "https://www.daft.ie/for-sale/apartment-9-block-f/456",
         ]
-        result = _first_valid_url(candidates, "APT 9, BLOCK F, SMITHFIELD MARKET DUBLIN 7")
+        result = _first_valid_url(
+            candidates, "APT 9, BLOCK F, SMITHFIELD MARKET DUBLIN 7"
+        )
         assert "for-sale" in result
 
     def test_skips_wrong_block(self):
@@ -202,7 +226,9 @@ class TestFirstValidUrl:
             "https://www.myhome.ie/residential/brochure/apartment-9-block-a/123",
             "https://www.myhome.ie/residential/brochure/apartment-9-block-f/456",
         ]
-        result = _first_valid_url(candidates, "APT 9, BLOCK F, SMITHFIELD MARKET DUBLIN 7")
+        result = _first_valid_url(
+            candidates, "APT 9, BLOCK F, SMITHFIELD MARKET DUBLIN 7"
+        )
         assert result == candidates[1]
 
     def test_returns_none_when_no_match(self):
@@ -210,15 +236,21 @@ class TestFirstValidUrl:
             "https://www.myhome.ie/priceregister/apt-9/123",
             "https://www.daft.ie/for-rent/apartment/456",
         ]
-        assert _first_valid_url(candidates, "APT 9, BLOCK F, SMITHFIELD MARKET DUBLIN 7") is None
+        assert (
+            _first_valid_url(candidates, "APT 9, BLOCK F, SMITHFIELD MARKET DUBLIN 7")
+            is None
+        )
 
     def test_empty_candidates(self):
-        assert _first_valid_url([], "APT 9, BLOCK F, SMITHFIELD MARKET DUBLIN 7") is None
+        assert (
+            _first_valid_url([], "APT 9, BLOCK F, SMITHFIELD MARKET DUBLIN 7") is None
+        )
 
 
 # ---------------------------------------------------------------------------
 # build_search_url
 # ---------------------------------------------------------------------------
+
 
 class TestBuildSearchUrl:
     def test_returns_google_url(self):

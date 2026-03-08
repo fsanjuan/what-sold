@@ -1,12 +1,18 @@
 import pandas as pd
 from openpyxl import Workbook
-from openpyxl.styles import Font, PatternFill, Alignment
+from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
 from links import build_search_url
 
-
-HEADERS = ["Address", "Date of Sale", "Price (€)", "Property Type", "Search", "Comments"]
+HEADERS = [
+    "Address",
+    "Date of Sale",
+    "Price (€)",
+    "Property Type",
+    "Search",
+    "Comments",
+]
 
 HEADER_FILL = PatternFill(start_color="1F4E79", end_color="1F4E79", fill_type="solid")
 HEADER_FONT = Font(bold=True, color="FFFFFF")
@@ -27,17 +33,25 @@ def generate_spreadsheet(matches: pd.DataFrame, output_path: str) -> None:
     # Write rows
     for row_idx, (_, row) in enumerate(matches.iterrows(), start=2):
         ws.cell(row=row_idx, column=1, value=str(row.get("Address", "")).strip())
-        ws.cell(row=row_idx, column=2, value=str(row.get("Date of Sale (dd/mm/yyyy)", "")).strip())
+        ws.cell(
+            row=row_idx,
+            column=2,
+            value=str(row.get("Date of Sale (dd/mm/yyyy)", "")).strip(),
+        )
 
         price = row.get("Price (€)", "")
         try:
             price_val = float(price)
             cell = ws.cell(row=row_idx, column=3, value=price_val)
-            cell.number_format = '#,##0.00'
+            cell.number_format = "#,##0.00"
         except (ValueError, TypeError):
             ws.cell(row=row_idx, column=3, value=str(price).strip())
 
-        ws.cell(row=row_idx, column=4, value=str(row.get("Description of Property", "")).strip())
+        ws.cell(
+            row=row_idx,
+            column=4,
+            value=str(row.get("Description of Property", "")).strip(),
+        )
 
         address = str(row.get("Address", "")).strip()
         resolved = row.get("_listing_url")

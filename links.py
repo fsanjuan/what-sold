@@ -23,38 +23,47 @@ def _extract_search_terms(address: str) -> str:
 
     # Capture the unit number from "APT XX" / "APARTMENT XX" style prefixes
     apt_match = re.match(
-        r'^\s*(?:APT|APARTMENT|UNIT|FLAT|NO\.?)\s+([\w-]+)',
-        address, flags=re.IGNORECASE
+        r"^\s*(?:APT|APARTMENT|UNIT|FLAT|NO\.?)\s+([\w-]+)",
+        address,
+        flags=re.IGNORECASE,
     )
     unit_id = apt_match.group(1) if apt_match else None
 
     # Strip the full apartment prefix, including an optional dash-separated block label
     # e.g. "APT 116 - BLK A1, " or "APT 58 BLOCK B, " or "APT 66, "
     cleaned = re.sub(
-        r'^\s*(?:APT|APARTMENT|UNIT|FLAT|NO\.?)\s+[\w-]+(?:\s*[-,/]\s*(?:BLK|BLOCK)\s+[\w-]+)?\s*[,]?\s*',
-        '', address, flags=re.IGNORECASE
+        r"^\s*(?:APT|APARTMENT|UNIT|FLAT|NO\.?)\s+[\w-]+(?:\s*[-,/]\s*(?:BLK|BLOCK)\s+[\w-]+)?\s*[,]?\s*",
+        "",
+        address,
+        flags=re.IGNORECASE,
     )
     # Strip a standalone BLOCK/BLK prefix that may remain after the apt strip
     cleaned = re.sub(
-        r'^\s*(?:BLOCK|BLK)\s+[\w-]+\s*[,]?\s*',
-        '', cleaned, flags=re.IGNORECASE
+        r"^\s*(?:BLOCK|BLK)\s+[\w-]+\s*[,]?\s*", "", cleaned, flags=re.IGNORECASE
     )
 
-    parts = [p.strip() for p in cleaned.split(',')]
+    parts = [p.strip() for p in cleaned.split(",")]
     meaningful = [
-        p for p in parts
+        p
+        for p in parts
         if p
-        and not re.match(r'^(Dublin|Cork|Galway|Limerick|Waterford|D\d)', p, re.IGNORECASE)
-        and not re.match(r'^Co\.?\s+', p, re.IGNORECASE)
+        and not re.match(
+            r"^(Dublin|Cork|Galway|Limerick|Waterford|D\d)", p, re.IGNORECASE
+        )
+        and not re.match(r"^Co\.?\s+", p, re.IGNORECASE)
     ]
 
     if unit_id:
         # Skip any remaining block-code fragments (e.g. "BLOCKA") to find the street name
-        street_parts = [p for p in meaningful if not re.match(r'^(BLOCK|BLK)\w*', p, re.IGNORECASE)]
-        street = street_parts[0] if street_parts else (meaningful[0] if meaningful else '')
+        street_parts = [
+            p for p in meaningful if not re.match(r"^(BLOCK|BLK)\w*", p, re.IGNORECASE)
+        ]
+        street = (
+            street_parts[0] if street_parts else (meaningful[0] if meaningful else "")
+        )
         return f"{unit_id} {street}".strip() if street else unit_id
 
-    return ' '.join(meaningful[:2])
+    return " ".join(meaningful[:2])
 
 
 def _build_query(address: str) -> str:
@@ -68,59 +77,76 @@ def _build_query(address: str) -> str:
 
     # APT-style: unit_id comes from explicit prefix
     apt_match = re.match(
-        r'^\s*(?:APT|APARTMENT|UNIT|FLAT|NO\.?)\s+([\w-]+)',
-        address, flags=re.IGNORECASE
+        r"^\s*(?:APT|APARTMENT|UNIT|FLAT|NO\.?)\s+([\w-]+)",
+        address,
+        flags=re.IGNORECASE,
     )
     unit_id = apt_match.group(1) if apt_match else None
 
     # Strip apartment + optional block prefix
     cleaned = re.sub(
-        r'^\s*(?:APT|APARTMENT|UNIT|FLAT|NO\.?)\s+[\w-]+(?:\s*[-,/]\s*(?:BLK|BLOCK)\s+[\w-]+)?\s*[,]?\s*',
-        '', address, flags=re.IGNORECASE
+        r"^\s*(?:APT|APARTMENT|UNIT|FLAT|NO\.?)\s+[\w-]+(?:\s*[-,/]\s*(?:BLK|BLOCK)\s+[\w-]+)?\s*[,]?\s*",
+        "",
+        address,
+        flags=re.IGNORECASE,
     )
-    cleaned = re.sub(r'^\s*(?:BLOCK|BLK)\s+[\w-]+\s*[,]?\s*', '', cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(
+        r"^\s*(?:BLOCK|BLK)\s+[\w-]+\s*[,]?\s*", "", cleaned, flags=re.IGNORECASE
+    )
 
-    parts = [p.strip() for p in cleaned.split(',')]
+    parts = [p.strip() for p in cleaned.split(",")]
     meaningful = [
-        p for p in parts
+        p
+        for p in parts
         if p
-        and not re.match(r'^(Dublin|Cork|Galway|Limerick|Waterford|D\d)', p, re.IGNORECASE)
-        and not re.match(r'^Co\.?\s+', p, re.IGNORECASE)
+        and not re.match(
+            r"^(Dublin|Cork|Galway|Limerick|Waterford|D\d)", p, re.IGNORECASE
+        )
+        and not re.match(r"^Co\.?\s+", p, re.IGNORECASE)
     ]
 
     def _clean_dev(name: str) -> str:
         """Strip trailing city/county from a development name."""
         return re.sub(
-            r'\s+(?:Dublin|Cork|Galway|Limerick|Waterford|D\d+)\b.*$', '', name, flags=re.IGNORECASE
+            r"\s+(?:Dublin|Cork|Galway|Limerick|Waterford|D\d+)\b.*$",
+            "",
+            name,
+            flags=re.IGNORECASE,
         ).strip()
 
     if unit_id:
         # Extract block identifier from original address before it was stripped
-        block_match = re.search(r'(?:BLOCK|BLK)\s*([\w-]+)', address, flags=re.IGNORECASE)
+        block_match = re.search(
+            r"(?:BLOCK|BLK)\s*([\w-]+)", address, flags=re.IGNORECASE
+        )
         block_id = block_match.group(1) if block_match else None
 
-        street_parts = [p for p in meaningful if not re.match(r'^(BLOCK|BLK)\w*', p, re.IGNORECASE)]
-        street = street_parts[0] if street_parts else (meaningful[0] if meaningful else '')
+        street_parts = [
+            p for p in meaningful if not re.match(r"^(BLOCK|BLK)\w*", p, re.IGNORECASE)
+        ]
+        street = (
+            street_parts[0] if street_parts else (meaningful[0] if meaningful else "")
+        )
         street = _clean_dev(street)
 
-        identifier = f'{unit_id} block {block_id}' if block_id else unit_id
+        identifier = f"{unit_id} block {block_id}" if block_id else unit_id
         return f'{identifier} "{street}"' if street else identifier
 
     # Non-APT: split leading identifier (e.g. "89C", "28A", "4") from development name
     if meaningful:
-        m = re.match(r'^(\S+)\s+(.+)$', meaningful[0])
+        m = re.match(r"^(\S+)\s+(.+)$", meaningful[0])
         if m:
             code, dev = m.group(1), _clean_dev(m.group(2))
             if dev:
                 return f'{code} "{dev}"'
         return f'"{meaningful[0]}"'
 
-    return ''
+    return ""
 
 
 def build_search_url(address: str) -> str:
     """Return a Google search URL to find the property listing on Daft or MyHome."""
-    query = f'site:myhome.ie/residential/brochure OR site:daft.ie/for-sale {_build_query(address)}'
+    query = f"site:myhome.ie/residential/brochure OR site:daft.ie/for-sale {_build_query(address)}"
     return "https://www.google.com/search?" + urlencode({"q": query})
 
 
@@ -133,17 +159,19 @@ def _url_matches_address(url: str, address: str) -> bool:
     address_lower = address.lower()
 
     # Check unit number from "APT 74" / "APARTMENT 58" style prefixes (digits only)
-    apt_match = re.match(r'^\s*(?:apt|apartment|unit|flat|no\.?)\s+(\d+)', address_lower)
+    apt_match = re.match(
+        r"^\s*(?:apt|apartment|unit|flat|no\.?)\s+(\d+)", address_lower
+    )
     if apt_match:
         unit_num = apt_match.group(1)
-        if not re.search(rf'(?<!\d){re.escape(unit_num)}(?!\d)', slug):
+        if not re.search(rf"(?<!\d){re.escape(unit_num)}(?!\d)", slug):
             return False
 
     # Check block letter — handles "BLOCK B", "BLK A1", "BLOCKA" etc.
-    block_match = re.search(r'(?:block|blk)\s*([a-z])', address_lower)
+    block_match = re.search(r"(?:block|blk)\s*([a-z])", address_lower)
     if block_match:
         block_letter = block_match.group(1)
-        if f'block-{block_letter}' not in slug:
+        if f"block-{block_letter}" not in slug:
             return False
 
     return True
@@ -151,8 +179,12 @@ def _url_matches_address(url: str, address: str) -> bool:
 
 def _first_valid_url(candidates: list[str], address: str) -> str | None:
     return next(
-        (c for c in candidates
-         if any(p in c for p in _VALID_URL_PATTERNS) and _url_matches_address(c, address)),
+        (
+            c
+            for c in candidates
+            if any(p in c for p in _VALID_URL_PATTERNS)
+            and _url_matches_address(c, address)
+        ),
         None,
     )
 
@@ -179,7 +211,8 @@ def resolve_listing_urls(
         url: str | None = None
 
         if terms:
-            query = f'site:myhome.ie/residential/brochure OR site:daft.ie/for-sale {_build_query(address)}'
+            site_filter = "site:myhome.ie/residential/brochure OR site:daft.ie/for-sale"
+            query = f"{site_filter} {_build_query(address)}"
             try:
                 resp = requests.post(
                     "https://google.serper.dev/search",
