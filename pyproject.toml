@@ -1,3 +1,26 @@
+[project]
+name = "what-sold"
+version = "0.1.0"
+description = "Search the Irish Property Price Register and export nearby sales to Excel"
+requires-python = ">=3.12"
+dependencies = [
+    "pandas==3.0.1",
+    "python-dateutil==2.9.0.post0",
+    "rapidfuzz==3.14.3",
+    "openpyxl==3.1.5",
+    "playwright==1.58.0",
+    "requests==2.32.5",
+]
+
+[dependency-groups]
+dev = [
+    "pytest==9.0.2",
+    "ruff==0.15.5",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
 [tool.ruff]
 line-length = 100
 
