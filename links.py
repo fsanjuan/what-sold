@@ -166,6 +166,15 @@ def _url_matches_address(url: str, address: str) -> bool:
         unit_num = apt_match.group(1)
         if not re.search(rf"(?<!\d){re.escape(unit_num)}(?!\d)", slug):
             return False
+    else:
+        # For plain house addresses (e.g. "17 MOUNT DRUMMOND SQUARE", "28A SOMERSET ROAD"),
+        # check the leading house number appears in the URL slug (digits only — the letter
+        # suffix like "A" in "28A" may be formatted differently in the URL).
+        house_match = re.match(r"^\s*(\d+)[a-z]?\s+", address_lower)
+        if house_match:
+            house_num = house_match.group(1)
+            if not re.search(rf"(?<!\d){re.escape(house_num)}(?!\d)", slug):
+                return False
 
     # Check block letter — handles "BLOCK B", "BLK A1", "BLOCKA" etc.
     block_match = re.search(r"(?:block|blk)\s*([a-z])", address_lower)
