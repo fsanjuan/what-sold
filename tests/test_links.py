@@ -111,6 +111,18 @@ class TestBuildQuery:
         assert "block B" in q_b
         assert "block C" in q_c
 
+    def test_exact_output_specific_street(self):
+        # Specific street name — query should be exactly number + quoted street, nothing extra
+        assert _build_query("18 ELM PARK COURT, NORTHSIDE, DUBLIN 6W") == '18 "ELM PARK COURT"'
+
+    def test_exact_output_apt_with_block(self):
+        # APT with block — query should be exactly unit + block + quoted development
+        assert _build_query("APT 66, BLOCK B, RIVERSIDE COURT DUBLIN 4") == '66 block B "RIVERSIDE COURT"'
+
+    def test_exact_output_apt_no_block(self):
+        # APT without block — query should be exactly unit + quoted development
+        assert _build_query("APT 2, WESTSIDE COURT, DUBLIN 4") == '2 "WESTSIDE COURT"'
+
     def test_rd_expanded_to_road(self):
         result = _build_query("229 OAK RD, NORTHSIDE, DUBLIN 4")
         assert '"OAK ROAD"' in result
