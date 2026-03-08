@@ -16,8 +16,8 @@ def slugify(text: str) -> str:
 
 
 def main():
-    print("House Price Helper")
-    print("------------------")
+    print("what-sold")
+    print("---------")
     print("Searches the Irish Property Price Register for similar nearby sales.\n")
 
     street = input("Street/area (e.g. Griffith Avenue, Dublin): ").strip()
