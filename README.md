@@ -21,7 +21,7 @@ When looking for a property to buy in Ireland, one of the first things worth doi
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 playwright install chromium
 ```
 
