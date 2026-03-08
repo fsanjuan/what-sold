@@ -82,3 +82,24 @@ Data is stored in `data/PPR-{year}.csv`. Historical years (2010 to last year) ar
 source .venv/bin/activate
 python3 -m pytest tests/
 ```
+
+## Docker
+
+**Run the tool:**
+```bash
+docker build -t what-sold .
+docker run -it -v $(pwd)/output:/app/output what-sold
+```
+
+Pass a Serper API key to enable link resolution:
+```bash
+docker run -it -e SERPER_API_KEY=your_key_here -v $(pwd)/output:/app/output what-sold
+```
+
+The `-v` flag mounts your local `output/` directory into the container so generated spreadsheets are saved to your machine.
+
+**Run the tests:**
+```bash
+docker build --target test -t what-sold-test .
+docker run what-sold-test
+```
