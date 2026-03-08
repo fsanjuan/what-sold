@@ -111,6 +111,27 @@ class TestBuildQuery:
         assert "block B" in q_b
         assert "block C" in q_c
 
+    def test_rd_expanded_to_road(self):
+        result = _build_query("229 OAK RD, NORTHSIDE, DUBLIN 4")
+        assert '"OAK ROAD"' in result
+
+    def test_ave_expanded_to_avenue(self):
+        result = _build_query("14 ELM AVE, WESTSIDE, DUBLIN 4")
+        assert '"ELM AVENUE"' in result
+
+    def test_st_expanded_when_not_prefix(self):
+        result = _build_query("5 CEDAR ST, WESTSIDE, DUBLIN 4")
+        assert '"CEDAR STREET"' in result
+
+    def test_st_not_expanded_at_start(self):
+        # "ST" at the beginning of a name is a saint prefix, not "Street"
+        result = _build_query("APT 3, BLOCK A, ST LAURENCE COURT, WESTSIDE")
+        assert '"ST LAURENCE COURT"' in result
+
+    def test_gdns_expanded_before_gdn(self):
+        result = _build_query("7 MAPLE GDNS, WESTSIDE, DUBLIN 4")
+        assert '"MAPLE GARDENS"' in result
+
 
 # ---------------------------------------------------------------------------
 # _url_matches_address

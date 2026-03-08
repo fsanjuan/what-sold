@@ -6,6 +6,31 @@ import requests
 
 TARGET_DOMAINS = ("daft.ie", "myhome.ie")
 
+# Common abbreviations used in PPR addresses that listing sites spell out in full.
+# Order matters: longer patterns (GDNS) must come before shorter ones (GDN).
+_ABBREVIATIONS = [
+    (r"\bGDNS\b", "GARDENS"),
+    (r"\bGDN\b", "GARDEN"),
+    (r"\bRD\b", "ROAD"),
+    (r"\bAVE\b", "AVENUE"),
+    (r"\bDR\b", "DRIVE"),
+    (r"\bPL\b", "PLACE"),
+    (r"\bSQ\b", "SQUARE"),
+    (r"\bTER\b", "TERRACE"),
+    (r"\bCRES\b", "CRESCENT"),
+    (r"\bLN\b", "LANE"),
+    (r"\bCL\b", "CLOSE"),
+    # ST → STREET only when preceded by another word (avoids expanding "St Patrick's")
+    (r"(?<=\S)\s+ST\b", " STREET"),
+]
+
+
+def _expand_abbreviations(name: str) -> str:
+    """Expand common PPR street abbreviations to their full form."""
+    for pattern, replacement in _ABBREVIATIONS:
+        name = re.sub(pattern, replacement, name, flags=re.IGNORECASE)
+    return name
+
 # URL path patterns that indicate a real listing page worth linking to
 _VALID_URL_PATTERNS = (
     "myhome.ie/residential/brochure/",
@@ -127,7 +152,7 @@ def _build_query(address: str) -> str:
         street = (
             street_parts[0] if street_parts else (meaningful[0] if meaningful else "")
         )
-        street = _clean_dev(street)
+        street = _expand_abbreviations(_clean_dev(street))
 
         identifier = f"{unit_id} block {block_id}" if block_id else unit_id
         return f'{identifier} "{street}"' if street else identifier
@@ -136,7 +161,7 @@ def _build_query(address: str) -> str:
     if meaningful:
         m = re.match(r"^(\S+)\s+(.+)$", meaningful[0])
         if m:
-            code, dev = m.group(1), _clean_dev(m.group(2))
+            code, dev = m.group(1), _expand_abbreviations(_clean_dev(m.group(2)))
             if dev:
                 return f'{code} "{dev}"'
         return f'"{meaningful[0]}"'
