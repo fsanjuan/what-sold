@@ -1,6 +1,5 @@
 [project]
 name = "what-sold"
-version = "0.1.0"
 description = "Search the Irish Property Price Register and export nearby sales to Excel"
 requires-python = ">=3.12"
 dependencies = [
