@@ -39,6 +39,11 @@ _VALID_URL_PATTERNS = (
 )
 
 
+def _is_dual_property(address: str) -> bool:
+    """Return True for combined sales like '6 & 6A SHELTON DR' — no single listing to link to."""
+    return bool(re.match(r"^\d+[a-z]?\s*&\s*\d+", address, flags=re.IGNORECASE))
+
+
 def _extract_search_terms(address: str) -> str:
     """
     Extract meaningful search terms from a PPR address.
@@ -244,7 +249,7 @@ def resolve_listing_urls(
         terms = _extract_search_terms(address)
         url: str | None = None
 
-        if terms:
+        if terms and not _is_dual_property(address):
             site_filter = "site:myhome.ie/residential/brochure OR site:daft.ie/for-sale"
             query = f"{site_filter} {_build_query(address)}"
             try:

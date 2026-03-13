@@ -2,6 +2,7 @@ from links import (
     _build_query,
     _extract_search_terms,
     _first_valid_url,
+    _is_dual_property,
     _url_matches_address,
     build_search_url,
 )
@@ -122,6 +123,19 @@ class TestBuildQuery:
     def test_exact_output_apt_no_block(self):
         # APT without block — query should be exactly unit + quoted development
         assert _build_query("APT 2, WESTSIDE COURT, DUBLIN 4") == '2 "WESTSIDE COURT"'
+
+class TestIsDualProperty:
+    def test_detects_dual_property(self):
+        assert _is_dual_property("6 & 6A SHELTON DR, KIMMAGE, DUBLIN 12")
+
+    def test_detects_dual_property_no_letter(self):
+        assert _is_dual_property("6 & 7 SHELTON DR, KIMMAGE, DUBLIN 12")
+
+    def test_regular_address_not_dual(self):
+        assert not _is_dual_property("6A SHELTON DR, KIMMAGE, DUBLIN 12")
+
+    def test_apt_address_not_dual(self):
+        assert not _is_dual_property("APT 6, BLOCK A, RIVERSIDE COURT, DUBLIN 4")
 
     def test_rd_expanded_to_road(self):
         result = _build_query("229 OAK RD, NORTHSIDE, DUBLIN 4")
