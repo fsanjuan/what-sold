@@ -208,11 +208,27 @@ def _url_matches_address(url: str, address: str) -> bool:
         # For plain house addresses (e.g. "17 MOUNT DRUMMOND SQUARE", "28A SOMERSET ROAD"),
         # check the leading house number appears in the URL slug (digits only — the letter
         # suffix like "A" in "28A" may be formatted differently in the URL).
-        house_match = re.match(r"^\s*(\d+)[a-z]?\s+", address_lower)
+        house_match = re.match(r"^\s*(\d+)([a-z])?\s+", address_lower)
         if house_match:
             house_num = house_match.group(1)
-            if not re.search(rf"(?<!\d){re.escape(house_num)}(?!\d)", slug):
-                return False
+            house_letter = house_match.group(2)
+            if house_letter:
+                if f"block-{house_letter}" in slug:
+                    # Letter is a block indicator (e.g. "89C" where URL has "block-c")
+                    # — just verify the number
+                    if not re.search(rf"(?<!\d){re.escape(house_num)}(?!\d)", slug):
+                        return False
+                else:
+                    # Letter is a house suffix (e.g. "116B", "28A") — require it in slug
+                    if not re.search(rf"{re.escape(house_num)}-?{house_letter}(?!\w)", slug):
+                        return False
+            else:
+                # No letter suffix — check the number, but reject if the slug has the same
+                # number with a letter suffix (116 should not match 116b)
+                if not re.search(rf"(?<!\d){re.escape(house_num)}(?!\d)", slug):
+                    return False
+                if re.search(rf"(?<!\d){re.escape(house_num)}[a-z]", slug):
+                    return False
 
             # Also check a distinctive word from the street name appears in the slug.
             # This catches cases where the house number matches by coincidence but the

@@ -203,10 +203,38 @@ class TestUrlMatchesAddress:
             "17 ELM PARK, NORTHSIDE, DUBLIN 6",
         )
 
-    def test_alphanumeric_house_number_validates_digits_only(self):
-        # "89C" → checks "89" in slug, not "89c" (letter suffix may appear differently in URL)
+    def test_letter_suffix_required_in_slug(self):
+        # "116B" should not match a URL for "116"
+        assert not _url_matches_address(
+            "https://www.myhome.ie/residential/brochure/116-kimmage-road-west/1000007",
+            "116B KIMMAGE RD WEST, DUBLIN 12",
+        )
+
+    def test_letter_suffix_matches_hyphenated(self):
+        # "116B" should match "116-b" in slug
         assert _url_matches_address(
-            "https://www.myhome.ie/residential/brochure/89-block-c-riverside-court/1000007",
+            "https://www.myhome.ie/residential/brochure/116-b-kimmage-road-west/1000008",
+            "116B KIMMAGE RD WEST, DUBLIN 12",
+        )
+
+    def test_letter_suffix_matches_concatenated(self):
+        # "116B" should match "116b" in slug
+        assert _url_matches_address(
+            "https://www.myhome.ie/residential/brochure/116b-kimmage-road-west/1000009",
+            "116B KIMMAGE RD WEST, DUBLIN 12",
+        )
+
+    def test_no_letter_suffix_rejects_lettered_slug(self):
+        # "116" should not match a URL for "116b"
+        assert not _url_matches_address(
+            "https://www.myhome.ie/residential/brochure/116b-kimmage-road-west/1000010",
+            "116 KIMMAGE RD WEST, DUBLIN 12",
+        )
+
+    def test_alphanumeric_house_number_block_indicator(self):
+        # "89C" where URL has "block-c" — C is a block indicator, only number is checked
+        assert _url_matches_address(
+            "https://www.myhome.ie/residential/brochure/89-block-c-riverside-court/1000011",
             "89C RIVERSIDE COURT, WESTSIDE, DUBLIN 4",
         )
 
