@@ -59,9 +59,12 @@ Then answer `y` when prompted.
 
 The PPR records the address as it was registered at the time of sale. Listing sites (Daft, MyHome) use their own address formats, which often differ — abbreviated development names, different block labelling, missing unit numbers, etc. The script works around this by:
 
+- Expanding common PPR abbreviations before searching (e.g. `RD` → `ROAD`, `AVE` → `AVENUE`)
 - Quoting the development name as a phrase in the search query to avoid results from nearby developments
 - Including the block identifier in the query
-- Validating that the unit number and block letter from the PPR address actually appear in the returned URL slug
+- Validating that the house/unit number, block letter, and a distinctive word from the street name all appear in the returned URL slug
+- Distinguishing lettered house suffixes (e.g. `116B`) from block indicators (e.g. `89C` in a development) when validating URLs
+- Skipping link resolution entirely for dual-property sales (e.g. `6 & 6A`), which have no single listing to link to
 
 Despite these heuristics, some listings won't be found because:
 
@@ -80,7 +83,7 @@ Data is stored in `data/PPR-{year}.csv`. Historical years (2010 to last year) ar
 
 ```bash
 source .venv/bin/activate
-python3 -m pytest tests/
+pytest
 ```
 
 ## Docker
