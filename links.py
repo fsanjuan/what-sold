@@ -6,6 +6,14 @@ import requests
 
 TARGET_DOMAINS = ("daft.ie", "myhome.ie")
 
+# Generic words that appear in many street names and don't help identify a specific street.
+_STREET_STOPWORDS = {
+    "road", "street", "avenue", "drive", "place", "court", "close",
+    "grove", "lane", "gardens", "garden", "park", "way", "green",
+    "terrace", "crescent", "square", "lower", "upper", "north",
+    "south", "east", "west",
+}
+
 # Common abbreviations used in PPR addresses that listing sites spell out in full.
 # Order matters: longer patterns (GDNS) must come before shorter ones (GDN).
 _ABBREVIATIONS = [
@@ -204,6 +212,18 @@ def _url_matches_address(url: str, address: str) -> bool:
         if house_match:
             house_num = house_match.group(1)
             if not re.search(rf"(?<!\d){re.escape(house_num)}(?!\d)", slug):
+                return False
+
+            # Also check a distinctive word from the street name appears in the slug.
+            # This catches cases where the house number matches by coincidence but the
+            # street is completely different (e.g. "172 KIMMAGE RD" vs "172-whitehall-road").
+            first_part = address_lower.split(",")[0]
+            street_name = first_part[house_match.end():]
+            keywords = [
+                w for w in re.findall(r"[a-z]+", street_name)
+                if len(w) >= 5 and w not in _STREET_STOPWORDS
+            ]
+            if keywords and not any(kw in slug for kw in keywords):
                 return False
 
     # Check block letter — handles "BLOCK B", "BLK A1", "BLOCKA" etc.

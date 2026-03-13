@@ -243,6 +243,26 @@ class TestUrlMatchesAddress:
             "APT 66, BLOCK B, RIVERSIDE COURT DUBLIN 4",
         )
 
+    def test_wrong_street_rejected(self):
+        # House number matches but street name does not — should be rejected
+        assert not _url_matches_address(
+            "https://www.myhome.ie/residential/brochure/172-whitehall-road-dublin-12/1000013",
+            "172 KIMMAGE ROAD LOWER, DUBLIN 6W, DUBLIN",
+        )
+
+    def test_correct_street_accepted(self):
+        assert _url_matches_address(
+            "https://www.myhome.ie/residential/brochure/172-kimmage-road-lower-dublin-6w/1000014",
+            "172 KIMMAGE ROAD LOWER, DUBLIN 6W, DUBLIN",
+        )
+
+    def test_no_distinctive_words_skips_street_check(self):
+        # Street name has no words ≥5 chars outside stopwords — check is skipped
+        assert _url_matches_address(
+            "https://www.myhome.ie/residential/brochure/17-elm-park/1000004",
+            "17 ELM PARK, NORTHSIDE, DUBLIN 6",
+        )
+
 
 # ---------------------------------------------------------------------------
 # _first_valid_url
