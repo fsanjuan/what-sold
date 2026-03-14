@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 from openpyxl import load_workbook
 
-from spreadsheet import HEADERS, generate_spreadsheet
+from what_sold.spreadsheet import HEADERS, generate_spreadsheet
 
 
 @pytest.fixture
@@ -48,9 +48,7 @@ class TestSpreadsheetStructure:
     def test_header_row_matches(self, output_xlsx):
         wb = load_workbook(output_xlsx)
         ws = wb.active
-        actual_headers = [
-            ws.cell(row=1, column=i).value for i in range(1, len(HEADERS) + 1)
-        ]
+        actual_headers = [ws.cell(row=1, column=i).value for i in range(1, len(HEADERS) + 1)]
         assert actual_headers == HEADERS
 
     def test_row_count(self, output_xlsx, sample_matches):

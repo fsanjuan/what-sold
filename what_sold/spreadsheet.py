@@ -3,7 +3,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
-from links import build_search_url
+from .links import build_search_url
 
 HEADERS = [
     "Address",

@@ -1,10 +1,11 @@
 import io
 import os
 from datetime import date, datetime
+from pathlib import Path
 
 import pandas as pd
 
-DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
+DATA_DIR = str(Path(__file__).parent.parent / "data")
 PPR_BASE = "https://www.propertypriceregister.ie"
 START_YEAR = 2010
 
@@ -15,9 +16,7 @@ def _year_path(year: int) -> str:
 
 def _years_to_download() -> list[int]:
     current_year = date.today().year
-    missing = [
-        y for y in range(START_YEAR, current_year) if not os.path.exists(_year_path(y))
-    ]
+    missing = [y for y in range(START_YEAR, current_year) if not os.path.exists(_year_path(y))]
     # Current year is always refreshed
     return missing + [current_year]
 
@@ -79,9 +78,7 @@ def update_ppr() -> None:
 
         for i, year in enumerate(years):
             label = f"{year} (current)" if year == current_year else str(year)
-            print(
-                f"  Downloading {label}... ({i + 1}/{len(years)})", end="\r", flush=True
-            )
+            print(f"  Downloading {label}... ({i + 1}/{len(years)})", end="\r", flush=True)
             try:
                 df = _fetch_year(page, year)
                 if df is None:
@@ -118,9 +115,7 @@ def load_ppr() -> pd.DataFrame:
         f for f in os.listdir(DATA_DIR) if f.startswith("PPR-") and f.endswith(".csv")
     )
     if not year_files:
-        raise RuntimeError(
-            "No PPR data found in data/. Delete data/ and re-run to re-download."
-        )
+        raise RuntimeError("No PPR data found in data/. Delete data/ and re-run to re-download.")
 
     ages = []
     for f in year_files:
@@ -132,9 +127,7 @@ def load_ppr() -> pd.DataFrame:
     )
 
     frames = [
-        pd.read_csv(
-            os.path.join(DATA_DIR, f), dtype=str, encoding="utf-8", on_bad_lines="skip"
-        )
+        pd.read_csv(os.path.join(DATA_DIR, f), dtype=str, encoding="utf-8", on_bad_lines="skip")
         for f in year_files
     ]
     df = pd.concat(frames, ignore_index=True)

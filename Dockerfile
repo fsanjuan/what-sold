@@ -13,7 +13,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt && \
     playwright install chromium
 
-COPY *.py .
+COPY what_sold/ what_sold/
 
 # ---- test stage ----
 FROM base AS test
@@ -24,4 +24,4 @@ CMD ["pytest"]
 
 # ---- runtime stage (default) ----
 FROM base AS runtime
-CMD ["python", "main.py"]
+CMD ["python", "-m", "what_sold"]

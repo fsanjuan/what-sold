@@ -5,8 +5,8 @@ from unittest.mock import patch
 import pandas as pd
 import pytest
 
-import ppr
-from ppr import _year_path, _years_to_download, load_ppr
+import what_sold.ppr as ppr
+from what_sold.ppr import _year_path, _years_to_download, load_ppr
 
 
 class TestYearPath:
@@ -26,9 +26,7 @@ class TestYearsToDownload:
 
     def test_missing_historical_years_included(self, tmp_path):
         with patch.object(ppr, "DATA_DIR", str(tmp_path)):
-            with patch.object(
-                ppr, "_year_path", lambda y: str(tmp_path / f"PPR-{y}.csv")
-            ):
+            with patch.object(ppr, "_year_path", lambda y: str(tmp_path / f"PPR-{y}.csv")):
                 # Create only 2022 file, leave others missing
                 (tmp_path / "PPR-2022.csv").touch()
                 years = _years_to_download()
@@ -38,9 +36,7 @@ class TestYearsToDownload:
     def test_current_year_always_included_even_if_file_exists(self, tmp_path):
         current = date.today().year
         with patch.object(ppr, "DATA_DIR", str(tmp_path)):
-            with patch.object(
-                ppr, "_year_path", lambda y: str(tmp_path / f"PPR-{y}.csv")
-            ):
+            with patch.object(ppr, "_year_path", lambda y: str(tmp_path / f"PPR-{y}.csv")):
                 (tmp_path / f"PPR-{current}.csv").touch()
                 years = _years_to_download()
                 assert current in years
@@ -82,10 +78,8 @@ class TestLoadPpr:
         )
 
         with patch.object(ppr, "DATA_DIR", str(tmp_path)):
-            with patch.object(
-                ppr, "_year_path", lambda y: str(tmp_path / f"PPR-{y}.csv")
-            ):
-                with patch("ppr.update_ppr"):
+            with patch.object(ppr, "_year_path", lambda y: str(tmp_path / f"PPR-{y}.csv")):
+                with patch("what_sold.ppr.update_ppr"):
                     df = load_ppr()
 
         assert "_county_norm" in df.columns
@@ -105,10 +99,8 @@ class TestLoadPpr:
         )
 
         with patch.object(ppr, "DATA_DIR", str(tmp_path)):
-            with patch.object(
-                ppr, "_year_path", lambda y: str(tmp_path / f"PPR-{y}.csv")
-            ):
-                with patch("ppr.update_ppr"):
+            with patch.object(ppr, "_year_path", lambda y: str(tmp_path / f"PPR-{y}.csv")):
+                with patch("what_sold.ppr.update_ppr"):
                     df = load_ppr()
 
         assert df.iloc[0]["Price (€)"] == 350000.0
@@ -131,16 +123,14 @@ class TestLoadPpr:
             )
 
         with patch.object(ppr, "DATA_DIR", str(tmp_path)):
-            with patch.object(
-                ppr, "_year_path", lambda y: str(tmp_path / f"PPR-{y}.csv")
-            ):
-                with patch("ppr.update_ppr"):
+            with patch.object(ppr, "_year_path", lambda y: str(tmp_path / f"PPR-{y}.csv")):
+                with patch("what_sold.ppr.update_ppr"):
                     df = load_ppr()
 
         assert len(df) == 2
 
     def test_raises_if_no_data_files(self, tmp_path):
         with patch.object(ppr, "DATA_DIR", str(tmp_path)):
-            with patch("ppr.update_ppr"):  # skip download
+            with patch("what_sold.ppr.update_ppr"):  # skip download
                 with pytest.raises(RuntimeError, match="No PPR data found"):
                     load_ppr()

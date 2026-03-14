@@ -29,7 +29,7 @@ playwright install chromium
 
 ```bash
 source .venv/bin/activate
-python3 main.py
+python3 -m what_sold
 ```
 
 You'll be prompted for:

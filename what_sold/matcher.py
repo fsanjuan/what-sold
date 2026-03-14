@@ -36,9 +36,7 @@ def find_matches(
         county_df = county_df[county_df["_date_parsed"] >= pd.Timestamp(cutoff)]
 
     if county_df.empty:
-        print(
-            f"No records found in the past {months} months. Try increasing the time window."
-        )
+        print(f"No records found in the past {months} months. Try increasing the time window.")
         return pd.DataFrame()
 
     addresses = county_df["Address"].fillna("").tolist()

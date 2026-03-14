@@ -1,4 +1,4 @@
-from links import (
+from what_sold.links import (
     _build_query,
     _extract_search_terms,
     _first_valid_url,
@@ -7,7 +7,6 @@ from links import (
     build_search_url,
 )
 
-
 # ---------------------------------------------------------------------------
 # _extract_search_terms
 # ---------------------------------------------------------------------------
@@ -15,9 +14,7 @@ from links import (
 
 class TestExtractSearchTerms:
     def test_apt_prefix_stripped(self):
-        assert "APT" not in _extract_search_terms(
-            "APT 66, BLOCK B, RIVERSIDE COURT DUBLIN 4"
-        )
+        assert "APT" not in _extract_search_terms("APT 66, BLOCK B, RIVERSIDE COURT DUBLIN 4")
 
     def test_unit_number_kept(self):
         assert "66" in _extract_search_terms("APT 66, BLOCK B, RIVERSIDE COURT DUBLIN 4")
@@ -118,11 +115,14 @@ class TestBuildQuery:
 
     def test_exact_output_apt_with_block(self):
         # APT with block — query should be exactly unit + block + quoted development
-        assert _build_query("APT 66, BLOCK B, RIVERSIDE COURT DUBLIN 4") == '66 block B "RIVERSIDE COURT"'
+        assert _build_query("APT 66, BLOCK B, RIVERSIDE COURT DUBLIN 4") == (
+            '66 block B "RIVERSIDE COURT"'
+        )
 
     def test_exact_output_apt_no_block(self):
         # APT without block — query should be exactly unit + quoted development
         assert _build_query("APT 2, WESTSIDE COURT, DUBLIN 4") == '2 "WESTSIDE COURT"'
+
 
 class TestIsDualProperty:
     def test_detects_dual_property(self):

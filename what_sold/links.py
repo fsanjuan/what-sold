@@ -8,10 +8,29 @@ TARGET_DOMAINS = ("daft.ie", "myhome.ie")
 
 # Generic words that appear in many street names and don't help identify a specific street.
 _STREET_STOPWORDS = {
-    "road", "street", "avenue", "drive", "place", "court", "close",
-    "grove", "lane", "gardens", "garden", "park", "way", "green",
-    "terrace", "crescent", "square", "lower", "upper", "north",
-    "south", "east", "west",
+    "road",
+    "street",
+    "avenue",
+    "drive",
+    "place",
+    "court",
+    "close",
+    "grove",
+    "lane",
+    "gardens",
+    "garden",
+    "park",
+    "way",
+    "green",
+    "terrace",
+    "crescent",
+    "square",
+    "lower",
+    "upper",
+    "north",
+    "south",
+    "east",
+    "west",
 }
 
 # Common abbreviations used in PPR addresses that listing sites spell out in full.
@@ -38,6 +57,7 @@ def _expand_abbreviations(name: str) -> str:
     for pattern, replacement in _ABBREVIATIONS:
         name = re.sub(pattern, replacement, name, flags=re.IGNORECASE)
     return name
+
 
 # URL path patterns that indicate a real listing page worth linking to
 _VALID_URL_PATTERNS = (
@@ -76,29 +96,21 @@ def _extract_search_terms(address: str) -> str:
         flags=re.IGNORECASE,
     )
     # Strip a standalone BLOCK/BLK prefix that may remain after the apt strip
-    cleaned = re.sub(
-        r"^\s*(?:BLOCK|BLK)\s+[\w-]+\s*[,]?\s*", "", cleaned, flags=re.IGNORECASE
-    )
+    cleaned = re.sub(r"^\s*(?:BLOCK|BLK)\s+[\w-]+\s*[,]?\s*", "", cleaned, flags=re.IGNORECASE)
 
     parts = [p.strip() for p in cleaned.split(",")]
     meaningful = [
         p
         for p in parts
         if p
-        and not re.match(
-            r"^(Dublin|Cork|Galway|Limerick|Waterford|D\d)", p, re.IGNORECASE
-        )
+        and not re.match(r"^(Dublin|Cork|Galway|Limerick|Waterford|D\d)", p, re.IGNORECASE)
         and not re.match(r"^Co\.?\s+", p, re.IGNORECASE)
     ]
 
     if unit_id:
         # Skip any remaining block-code fragments (e.g. "BLOCKA") to find the street name
-        street_parts = [
-            p for p in meaningful if not re.match(r"^(BLOCK|BLK)\w*", p, re.IGNORECASE)
-        ]
-        street = (
-            street_parts[0] if street_parts else (meaningful[0] if meaningful else "")
-        )
+        street_parts = [p for p in meaningful if not re.match(r"^(BLOCK|BLK)\w*", p, re.IGNORECASE)]
+        street = street_parts[0] if street_parts else (meaningful[0] if meaningful else "")
         return f"{unit_id} {street}".strip() if street else unit_id
 
     return " ".join(meaningful[:2])
@@ -128,18 +140,14 @@ def _build_query(address: str) -> str:
         address,
         flags=re.IGNORECASE,
     )
-    cleaned = re.sub(
-        r"^\s*(?:BLOCK|BLK)\s+[\w-]+\s*[,]?\s*", "", cleaned, flags=re.IGNORECASE
-    )
+    cleaned = re.sub(r"^\s*(?:BLOCK|BLK)\s+[\w-]+\s*[,]?\s*", "", cleaned, flags=re.IGNORECASE)
 
     parts = [p.strip() for p in cleaned.split(",")]
     meaningful = [
         p
         for p in parts
         if p
-        and not re.match(
-            r"^(Dublin|Cork|Galway|Limerick|Waterford|D\d)", p, re.IGNORECASE
-        )
+        and not re.match(r"^(Dublin|Cork|Galway|Limerick|Waterford|D\d)", p, re.IGNORECASE)
         and not re.match(r"^Co\.?\s+", p, re.IGNORECASE)
     ]
 
@@ -154,17 +162,11 @@ def _build_query(address: str) -> str:
 
     if unit_id:
         # Extract block identifier from original address before it was stripped
-        block_match = re.search(
-            r"(?:BLOCK|BLK)\s*([\w-]+)", address, flags=re.IGNORECASE
-        )
+        block_match = re.search(r"(?:BLOCK|BLK)\s*([\w-]+)", address, flags=re.IGNORECASE)
         block_id = block_match.group(1) if block_match else None
 
-        street_parts = [
-            p for p in meaningful if not re.match(r"^(BLOCK|BLK)\w*", p, re.IGNORECASE)
-        ]
-        street = (
-            street_parts[0] if street_parts else (meaningful[0] if meaningful else "")
-        )
+        street_parts = [p for p in meaningful if not re.match(r"^(BLOCK|BLK)\w*", p, re.IGNORECASE)]
+        street = street_parts[0] if street_parts else (meaningful[0] if meaningful else "")
         street = _expand_abbreviations(_clean_dev(street))
 
         identifier = f"{unit_id} block {block_id}" if block_id else unit_id
@@ -197,9 +199,7 @@ def _url_matches_address(url: str, address: str) -> bool:
     address_lower = address.lower()
 
     # Check unit number from "APT 74" / "APARTMENT 58" style prefixes (digits only)
-    apt_match = re.match(
-        r"^\s*(?:apt|apartment|unit|flat|no\.?)\s+(\d+)", address_lower
-    )
+    apt_match = re.match(r"^\s*(?:apt|apartment|unit|flat|no\.?)\s+(\d+)", address_lower)
     if apt_match:
         unit_num = apt_match.group(1)
         if not re.search(rf"(?<!\d){re.escape(unit_num)}(?!\d)", slug):
@@ -234,9 +234,10 @@ def _url_matches_address(url: str, address: str) -> bool:
             # This catches cases where the house number matches by coincidence but the
             # street is completely different (e.g. "172 KIMMAGE RD" vs "172-whitehall-road").
             first_part = address_lower.split(",")[0]
-            street_name = first_part[house_match.end():]
+            street_name = first_part[house_match.end() :]
             keywords = [
-                w for w in re.findall(r"[a-z]+", street_name)
+                w
+                for w in re.findall(r"[a-z]+", street_name)
                 if len(w) >= 5 and w not in _STREET_STOPWORDS
             ]
             if keywords and not any(kw in slug for kw in keywords):
@@ -257,8 +258,7 @@ def _first_valid_url(candidates: list[str], address: str) -> str | None:
         (
             c
             for c in candidates
-            if any(p in c for p in _VALID_URL_PATTERNS)
-            and _url_matches_address(c, address)
+            if any(p in c for p in _VALID_URL_PATTERNS) and _url_matches_address(c, address)
         ),
         None,
     )

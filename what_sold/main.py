@@ -1,11 +1,12 @@
 import os
 import re
 from datetime import date
+from pathlib import Path
 
-from links import _build_query, resolve_listing_urls
-from matcher import find_matches
-from ppr import load_ppr
-from spreadsheet import generate_spreadsheet
+from .links import _build_query, resolve_listing_urls
+from .matcher import find_matches
+from .ppr import load_ppr
+from .spreadsheet import generate_spreadsheet
 
 
 def slugify(text: str) -> str:
@@ -40,25 +41,19 @@ def main():
     matches = find_matches(df, street, county, months=months)
 
     if matches.empty:
-        print(
-            "No matches found. Try a broader street name or check the county spelling."
-        )
+        print("No matches found. Try a broader street name or check the county spelling.")
         return
 
     print(f"Found {len(matches)} match(es).")
 
     serper_key = os.environ.get("SERPER_API_KEY", "").strip()
     resolve = (
-        input("Resolve Daft/MyHome links? [y/N/debug]: ").strip().lower()
-        if serper_key
-        else "n"
+        input("Resolve Daft/MyHome links? [y/N/debug]: ").strip().lower() if serper_key else "n"
     )
     if resolve in ("y", "debug") and serper_key:
         debug = resolve == "debug"
         print("Searching for listings...")
-        address_list = [
-            str(row.get("Address", "")).strip() for _, row in matches.iterrows()
-        ]
+        address_list = [str(row.get("Address", "")).strip() for _, row in matches.iterrows()]
         idx_list = list(matches.index)
         total = len(address_list)
 
@@ -79,15 +74,13 @@ def main():
         found = sum(1 for v in urls.values() if v)
         print(f"  {found}/{len(matches)} listing(s) found.")
     elif resolve == "y" and not serper_key:
-        print(
-            "  Skipping — set SERPER_API_KEY environment variable to enable link resolution."
-        )
+        print("  Skipping — set SERPER_API_KEY environment variable to enable link resolution.")
 
     slug = slugify(f"{street}_{county}")
     filename = f"{slug}_{date.today()}.xlsx"
-    output_dir = os.path.join(os.path.dirname(__file__), "output")
-    os.makedirs(output_dir, exist_ok=True)
-    output_path = os.path.join(output_dir, filename)
+    output_dir = Path(__file__).parent.parent / "output"
+    output_dir.mkdir(exist_ok=True)
+    output_path = str(output_dir / filename)
 
     generate_spreadsheet(matches, output_path)
     print(f"\nSaved to: output/{filename}")

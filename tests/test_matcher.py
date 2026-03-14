@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 from dateutil.relativedelta import relativedelta
 
-from matcher import find_matches
+from what_sold.matcher import find_matches
 
 
 def make_df(records):
