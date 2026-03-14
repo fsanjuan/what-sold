@@ -1,6 +1,6 @@
 # What sold?
 
-When looking for a property to buy in Ireland, one of the first things worth doing is checking what has actually sold nearby — and for how much. The [Property Price Register](https://www.propertypriceregister.ie/) (PPR) has all of that data, but browsing it manually and copy-pasting results into a spreadsheet is tedious. This tool automates exactly that: give it a street or development name and it produces a ready-to-use Excel spreadsheet in under a minute.
+When looking for a property to buy in Ireland, one of the first things worth doing is checking what has actually sold nearby — and for how much. The [Property Price Register](https://www.propertypriceregister.ie/) (PPR) has all of that data, but browsing it manually and copy-pasting results into a spreadsheet is tedious. This tool automates exactly that: give it a street or development name and it produces a ready-to-use Excel spreadsheet in under a minute — with links to the original listings on Daft or MyHome where available.
 
 ## What it does
 
